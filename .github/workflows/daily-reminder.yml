@@ -1,0 +1,59 @@
+name: Daily Reminders
+
+on:
+  schedule:
+    # Run at 9:00 AM UTC+8 (1:00 AM UTC)
+    - cron: '0 1 * * *'
+    # Run at 10:00 PM UTC+8 (14:00 PM UTC)
+    - cron: '0 14 * * *'
+  # Allow manual triggering for testing
+  workflow_dispatch:
+    inputs:
+      message_type:
+        description: 'Type of message to send (morning/evening)'
+        required: true
+        default: 'morning'
+        type: choice
+        options:
+          - morning
+          - evening
+
+jobs:
+  send-reminder:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+      
+      - name: Install dependencies
+        run: pip install requests
+      
+      - name: Determine message type based on time
+        id: message-type
+        if: github.event_name == 'schedule'
+        run: |
+          HOUR=$(TZ='Asia/Shanghai' date +%H)
+          if [ $HOUR -eq 9 ]; then
+            echo "type=morning" >> $GITHUB_OUTPUT
+          elif [ $HOUR -eq 22 ]; then
+            echo "type=evening" >> $GITHUB_OUTPUT
+          else
+            echo "Unknown hour: $HOUR"
+            exit 1
+          fi
+      
+      - name: Use manual message type
+        id: manual-message-type
+        if: github.event_name == 'workflow_dispatch'
+        run: echo "type=${{ github.event.inputs.message_type }}" >> $GITHUB_OUTPUT
+      
+      - name: Send reminder
+        env:
+          WEBHOOK_KEY: ${{ secrets.WEBHOOK_KEY }}
+          MESSAGE_TYPE: ${{ github.event_name == 'schedule' && steps.message-type.outputs.type || steps.manual-message-type.outputs.type }}
+        run: python scripts/send_reminder.py
