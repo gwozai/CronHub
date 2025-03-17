@@ -5,11 +5,11 @@ import datetime
 
 # 获取环境变量
 webhook_key = os.environ.get('WEBHOOK_KEY')
-ai_api_key = os.environ.get('API_KEY')
+api_key = os.environ.get('API_KEY')  # 使用 API_KEY 代替 AI_API_KEY
 message_type = os.environ.get('MESSAGE_TYPE', 'morning')
 
-if not webhook_key or not ai_api_key:
-    print("Error: Missing WEBHOOK_KEY or AI_API_KEY")
+if not webhook_key or not api_key:
+    print("Error: Missing WEBHOOK_KEY or API_KEY")
     sys.exit(1)
 
 # 定义 URL
@@ -21,13 +21,13 @@ webhook_headers = {"Content-Type": "application/json"}
 ai_headers = {
     "Content-Type": "application/json",
     "Accept": "application/json",
-    "Authorization": f"Bearer {ai_api_key}"
+    "Authorization": f"Bearer {api_key}"
 }
 
 # 获取当前日期
 current_date = datetime.datetime.now().strftime("%Y年%m月%d日")
 
-# 定义 AI 提示词（要求简洁流畅并带健康提醒）
+# 定义 AI 提示词
 if message_type == "morning":
     prompt = f"生成一句简洁流畅的早安问候，包含日期 {current_date}，语气温暖，末尾加一句简短的健康提醒。"
 elif message_type == "evening":
