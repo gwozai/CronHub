@@ -5,7 +5,7 @@ import datetime
 
 # 获取环境变量
 webhook_key = os.environ.get('WEBHOOK_KEY')
-ai_api_key = os.environ.get('AI_API_KEY')
+ai_api_key = os.environ.get('API_KEY')
 message_type = os.environ.get('MESSAGE_TYPE', 'morning')
 
 if not webhook_key or not ai_api_key:
