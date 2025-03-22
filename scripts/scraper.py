@@ -66,6 +66,21 @@ def main():
     # 获取当前日期时间
     current_datetime = datetime.datetime.now().strftime("%Y年%m月%d日 %H:%M:%S")
 
+    # 从环境变量获取抓取次数，默认为50
+    scrape_count_str = os.environ.get('SCRAPE_COUNT', '50')
+    try:
+        scrape_count = int(scrape_count_str)
+        # 确保抓取次数在有效范围内
+        valid_counts = [10, 50, 100, 500, 1000]
+        if scrape_count not in valid_counts:
+            print(f"警告: 无效的抓取次数 {scrape_count}，使用默认值 50")
+            scrape_count = 50
+    except ValueError:
+        print(f"警告: 无法解析抓取次数 '{scrape_count_str}'，使用默认值 50")
+        scrape_count = 50
+
+    print(f"本次将抓取 {scrape_count} 条数据")
+
     # 加载现有数据
     existing_data = load_existing_data()
     print(f"已加载现有数据 {len(existing_data)} 条")
@@ -75,8 +90,8 @@ def main():
     new_data = []
     max_retries = 10  # 最大重试次数
 
-    # 抓取50次
-    while count < 50:
+    # 抓取指定次数
+    while count < scrape_count:
         try:
             headers = {
                 'User-Agent': get_random_ua()
@@ -95,7 +110,7 @@ def main():
                         content = results[0]
                         new_data.append(content)
                         count += 1
-                        print(f'********正在爬取中，这是第{count}次爬取********')
+                        print(f'********正在爬取中，这是第{count}/{scrape_count}次爬取********')
                         break
                     else:
                         print("未找到内容，重试...")
@@ -144,7 +159,8 @@ def main():
     # 准备发送到企业微信的消息
     wechat_message = f"""数据抓取报告 - {current_datetime}
 
-本次抓取: {len(new_data)} 条
+抓取设置: {scrape_count} 次
+实际抓取: {len(new_data)} 条
 本次数据中重复: {new_duplicates} 条
 本次新增唯一数据: {new_unique_count} 条
 当前总数据量: {len(unique_data)} 条

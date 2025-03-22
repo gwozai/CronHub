@@ -1,9 +1,21 @@
-name: Hourly Web Scraper
+name: Scheduled Web Scraper
 
 on:
   schedule:
     - cron: '0 * * * *'  # 每小时整点执行一次
-  workflow_dispatch:  # 允许手动触发
+  workflow_dispatch:
+    inputs:
+      scrape_count:
+        description: '抓取次数 (10/50/100/500/1000)'
+        required: true
+        default: '50'
+        type: choice
+        options:
+          - '10'
+          - '50'
+          - '100'
+          - '500'
+          - '1000'
 
 jobs:
   scrape:
@@ -12,6 +24,8 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v3
+      with:
+        fetch-depth: 0  # 获取完整历史以便正确提交
 
     - name: Set up Python
       uses: actions/setup-python@v4
@@ -26,6 +40,7 @@ jobs:
     - name: Run scraper
       env:
         WEBHOOK_KEY: ${{ secrets.WEBHOOK_KEY }}
+        SCRAPE_COUNT: ${{ github.event.inputs.scrape_count || '50' }}
       run: python scripts/scraper.py
 
     - name: Commit and push if changed
@@ -33,4 +48,4 @@ jobs:
         git config --global user.name 'GitHub Actions'
         git config --global user.email 'actions@github.com'
         git add NiHaoWu.json
-        git diff --quiet && git diff --staged --quiet || (git commit -m "Auto update data [skip ci]" && git push)
+        git diff --quiet && git diff --staged --quiet || (git commit -m "Auto update data: $SCRAPE_COUNT times [skip ci]" && git push)
